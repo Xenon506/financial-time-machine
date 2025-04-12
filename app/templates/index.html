@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Time Machine</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Financial Time Machine</h1>
+    <form id="finance-form">
+        <label>Monthly Income: <input type="number" name="income" /></label><br>
+        <label>Monthly Expense: <input type="number" name="monthly_expense" /></label><br>
+        <label>Savings: <input type="number" name="savings" /></label><br>
+        <label>Goal: <input type="text" name="goal" /></label><br>
+        <button type="submit">Analyze</button>
+    </form>
+    <div id="results"></div>
+    <canvas id="chart" width="600" height="400"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const form = document.getElementById("finance-form");
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(form));
+            const res = await fetch("/analyze", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
+            document.getElementById("results").innerText = 
+                `Advice: ${data.advice} | Spend Behavior: ${data.behavior.status}`;
+            const ctx = document.getElementById("chart").getContext("2d");
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.future.map(p => `Year ${p.year}`),
+                    datasets: [{
+                        label: 'Projected Savings',
+                        data: data.future.map(p => p.savings),
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                }
+            });
+        });
+    </script>
+</body>
+</html>
